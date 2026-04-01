@@ -257,7 +257,17 @@ let mesSel = new Date().getMonth();
 let anoSel = new Date().getFullYear();
 
 function fmt(v){return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
-function pidx(t){if(t<=30000)return 0;if(t<=35000)return 1;if(t<=40000)return 2;if(t<=45000)return 3;if(t<=50000)return 4;if(t<=55000)return 5;return 6;}
+function pidx(t){
+  // Patamar = faixa que o total JÁ ATINGIU (ex: 38.515 atingiu 35.000 mas não 40.000 → idx 1 = 1,50%)
+  if(t<30000)return 0;  // abaixo de 30k = 0%
+  if(t<35000)return 0;  // atingiu 30k mas não 35k = 0%
+  if(t<40000)return 1;  // atingiu 35k mas não 40k = 1,50%
+  if(t<45000)return 2;  // atingiu 40k mas não 45k = 1,60%
+  if(t<50000)return 3;  // atingiu 45k mas não 50k = 1,70%
+  if(t<55000)return 4;  // atingiu 50k mas não 55k = 1,80%
+  if(t<60000)return 5;  // atingiu 55k mas não 60k = 1,90%
+  return 6;             // atingiu 60k+ = 2,00%
+}
 function setSS(st,txt){
   const d=document.getElementById("sync-dot"),s=document.getElementById("sync-txt");
   if(d)d.className="sync-dot "+st;
@@ -407,7 +417,7 @@ function renderGraf(){
 
 function renderTabela(idx){
   if(idx===undefined){const t=GER?tTotal():tFunc(UA.u);idx=pidx(t);}
-  const lims=[30000,35000,40000,45000,50000,55000,60000];
+  const lims=[34999,39999,44999,49999,54999,59999,65000];
   const tb=document.getElementById("tb-pat");
   if(!tb)return; tb.innerHTML="";
   PATS.forEach((p,i)=>{
