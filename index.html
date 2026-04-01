@@ -156,20 +156,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--creme);color:var(--text);
       <button class="mes-btn" id="btn-mes-prox">&#8250;</button>
     </div>
 
-    <div class="card">
-      <div class="card-lbl">Total vendido no mês</div>
-      <div class="v-big" id="d-total">R$ 0,00</div>
-      <div class="v-sub">Meta: R$ 60.000,00</div>
+    <div class="card" style="border-left:4px solid var(--marrom);">
+      <div class="card-lbl">Total da loja no mês</div>
+      <div class="v-big" id="d-total-loja">R$ 0,00</div>
+      <div class="v-sub" id="d-meta-sub">Meta: R$ 60.000,00</div>
     </div>
-    <div class="prog-row"><span>Progresso da meta</span><span id="d-pct">0%</span></div>
+    <div class="prog-row"><span>Progresso da meta da loja</span><span id="d-pct">0%</span></div>
     <div class="prog-bg"><div class="prog-fill" id="d-barra" style="width:0%"></div></div>
+    <div id="d-card-individual" class="card" style="border-left:4px solid var(--dourado);">
+      <div class="card-lbl">Minhas vendas no mês</div>
+      <div class="v-big" id="d-total">R$ 0,00</div>
+    </div>
     <div class="grid2">
-      <div class="mc"><div class="mc-lbl">Comissão atual</div><div class="mc-val g" id="d-com">R$ 0,00</div></div>
+      <div class="mc"><div class="mc-lbl">Minha comissão</div><div class="mc-val g" id="d-com">R$ 0,00</div></div>
       <div class="mc"><div class="mc-lbl">% comissão</div><div class="mc-val d" id="d-pcom">0,00%</div></div>
     </div>
     <div class="motiv" id="d-motiv">Carregando...</div>
     <div class="prox" id="d-prox" style="display:none"></div>
-    <div class="card"><div class="card-lbl">Vendas por dia</div><div class="chart-wrap"><canvas id="graf"></canvas></div></div>
+    <div class="card"><div class="card-lbl" id="d-graf-lbl">Minhas vendas por dia</div><div class="chart-wrap"><canvas id="graf"></canvas></div></div>
   </div>
 
   <div class="screen" id="sc-pata">
@@ -402,22 +406,43 @@ document.querySelectorAll(".tab").forEach(btn=>{
 });
 
 function renderDash(){
-  const total=GER?tTotal():tFunc(UA.key||UA.u);
-  const idx=pidx(total),pct=PATS[idx].pct,com=total*pct/100;
-  const prog=Math.min(100,(total/META)*100);
+  const totalLoja = tTotal();
+  const totalFunc = GER ? totalLoja : tFunc(UA.key||UA.u);
+  const idx = pidx(totalLoja); // patamar pelo total da loja
+  const pct = PATS[idx].pct;
+  const com = totalFunc * pct / 100; // comissão = vendas individuais × % da loja
+  const prog = Math.min(100,(totalLoja/META)*100);
   atualizarMesLabel();
-  document.getElementById("d-total").textContent=fmt(total);
-  document.getElementById("d-pct").textContent=prog.toFixed(1)+"%";
-  document.getElementById("d-barra").style.width=prog+"%";
-  document.getElementById("d-com").textContent=fmt(com);
-  document.getElementById("d-pcom").textContent=pct.toFixed(2).replace(".",",")+"%";
-  let m=MOTIVS[Math.floor(Math.random()*MOTIVS.length)];
-  if(prog>=100)m="🏆 META BATIDA! Parabéns, você é incrível!";
-  else if(prog>=80)m="🔥 Faltando pouco! Você está quase lá!";
-  else if(prog>=50)m="💪 Mais da metade do caminho! Você consegue!";
-  document.getElementById("d-motiv").textContent=m;
-  const prx=document.getElementById("d-prox");
-  if(idx<PATS.length-1){const np=PATS[idx+1];prx.style.display="block";prx.innerHTML="<strong>Faltam "+fmt(np.ate-total)+"</strong> para o próximo patamar de <strong>"+np.pct.toFixed(2).replace(".",",")+"%</strong>";}
+
+  // Card total da loja
+  document.getElementById("d-total-loja").textContent = fmt(totalLoja);
+  document.getElementById("d-meta-sub").textContent = "Meta: "+fmt(META);
+  document.getElementById("d-pct").textContent = prog.toFixed(1)+"%";
+  document.getElementById("d-barra").style.width = prog+"%";
+
+  // Card individual — esconde para gerente (já vê no total da loja)
+  const cardInd = document.getElementById("d-card-individual");
+  if(GER){
+    cardInd.style.display = "none";
+    document.getElementById("d-graf-lbl").textContent = "Vendas da loja por dia";
+    document.querySelector(".mc-lbl").textContent = "Comissão total";
+  } else {
+    cardInd.style.display = "block";
+    document.getElementById("d-total").textContent = fmt(totalFunc);
+    document.getElementById("d-graf-lbl").textContent = "Minhas vendas por dia";
+  }
+
+  document.getElementById("d-com").textContent = fmt(com);
+  document.getElementById("d-pcom").textContent = pct.toFixed(2).replace(".",",")+"%";
+
+  let m = MOTIVS[Math.floor(Math.random()*MOTIVS.length)];
+  if(prog>=100) m="🏆 META BATIDA! Parabéns, equipe incrível!";
+  else if(prog>=80) m="🔥 Faltando pouco! A loja está quase lá!";
+  else if(prog>=50) m="💪 Mais da metade do caminho! Vocês conseguem!";
+  document.getElementById("d-motiv").textContent = m;
+
+  const prx = document.getElementById("d-prox");
+  if(idx<PATS.length-1){const np=PATS[idx+1];prx.style.display="block";prx.innerHTML="<strong>Faltam "+fmt(np.ate-totalLoja)+"</strong> para a loja atingir o próximo patamar de <strong>"+np.pct.toFixed(2).replace(".",",")+"%</strong>";}
   else{prx.style.display="block";prx.innerHTML="🏅 <strong>Patamar máximo! Comissão de 2,00%</strong>";}
   renderGraf(); renderTabela(idx);
 }
@@ -444,7 +469,7 @@ function renderGraf(){
 }
 
 function renderTabela(idx){
-  if(idx===undefined){const t=GER?tTotal():tFunc(UA.key||UA.u);idx=pidx(t);}
+  if(idx===undefined){idx=pidx(tTotal());} // sempre pelo total da loja
   const lims=[34999,39999,44999,49999,54999,59999,65000];
   const tb=document.getElementById("tb-pat");
   if(!tb)return; tb.innerHTML="";
