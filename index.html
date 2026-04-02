@@ -113,6 +113,23 @@ body{font-family:"DM Sans",sans-serif;background:var(--creme);color:var(--text);
 .divider{height:1px;background:var(--bege2);margin:16px 0;}
 .empty{color:var(--muted);font-size:13px;text-align:center;padding:12px;}
 .loading-txt{color:var(--muted);font-size:13px;text-align:center;padding:16px;}
+.eq-card{background:#fff;border-radius:12px;border:1px solid var(--bege2);padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+.eq-av{width:42px;height:42px;border-radius:50%;background:var(--bege2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--marrom2);flex-shrink:0;}
+.eq-info{flex:1;min-width:0;}
+.eq-nome{font-weight:700;font-size:14px;color:var(--marrom);}
+.eq-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.eq-vals{text-align:right;flex-shrink:0;}
+.eq-total{font-family:"Playfair Display",serif;font-size:17px;font-weight:700;color:var(--marrom);}
+.eq-com{font-size:11px;color:var(--verde);font-weight:600;margin-top:2px;}
+.eq-bar-bg{background:var(--bege2);border-radius:99px;height:6px;margin-top:6px;overflow:hidden;}
+.eq-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--verde),var(--dourado2));transition:width 0.8s;}
+.st-th{background:var(--marrom);color:#fff;padding:7px 8px;text-align:center;font-size:10px;font-weight:600;white-space:nowrap;}
+.st-th:first-child{text-align:left;}
+.st-td{padding:7px 8px;border-bottom:1px solid var(--bege2);text-align:center;font-size:11px;color:var(--text);white-space:nowrap;}
+.st-td:first-child{text-align:left;font-weight:600;color:var(--marrom);}
+.st-tr:nth-child(even) .st-td{background:var(--bege);}
+.st-total{font-weight:700;color:var(--marrom);}
+.st-foot .st-td{background:var(--bege2);font-weight:700;color:var(--marrom);border-top:2px solid var(--bege2);}
 .modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:100;align-items:center;justify-content:center;padding:20px;}
 .modal-bg.open{display:flex;}
 .modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:320px;}
@@ -149,6 +166,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--creme);color:var(--text);
   </div>
   <div class="tabs">
     <button class="tab active" data-tab="dash">📊 Vendas</button>
+    <button class="tab" data-tab="equipe" id="tab-equipe">👥 Equipe</button>
+    <button class="tab" data-tab="stats">📅 Estatísticas</button>
     <button class="tab" data-tab="pata">💰 Patamares</button>
     <button class="tab" id="tab-ger" data-tab="ger" style="display:none">⚙️ Gerente</button>
   </div>
@@ -181,6 +200,47 @@ body{font-family:"DM Sans",sans-serif;background:var(--creme);color:var(--text);
     <div class="motiv" id="d-motiv">Carregando...</div>
     <div class="prox" id="d-prox" style="display:none"></div>
     <div class="card"><div class="card-lbl" id="d-graf-lbl">Minhas vendas por dia</div><div class="chart-wrap"><canvas id="graf"></canvas></div></div>
+  </div>
+
+  <!-- EQUIPE -->
+  <div class="screen" id="sc-equipe">
+    <div class="sync-bar"><div class="sync-dot ok"></div><span>Atualizado em tempo real</span></div>
+    <div class="mes-selector" style="margin-bottom:10px">
+      <button class="mes-btn" id="eq-mes-ant">&#8249;</button>
+      <div class="mes-label" id="eq-mes-lbl">Carregando...</div>
+      <button class="mes-btn" id="eq-mes-prox">&#8250;</button>
+    </div>
+    <!-- Resumo da loja -->
+    <div class="card" style="border-left:4px solid var(--marrom);margin-bottom:10px">
+      <div class="card-lbl">Total da loja</div>
+      <div class="v-big" id="eq-total-loja">R$ 0,00</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px" id="eq-patamar-loja">Patamar: 0,00%</div>
+    </div>
+    <!-- Cards dos funcionários -->
+    <div id="eq-lista"></div>
+    <!-- Gráfico comparativo -->
+    <div class="card" style="margin-top:4px">
+      <div class="card-lbl">Comparativo de vendas</div>
+      <div style="position:relative;width:100%;height:200px;margin-top:6px"><canvas id="eq-graf"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ESTATÍSTICAS -->
+  <div class="screen" id="sc-stats">
+    <div class="mes-selector" style="margin-bottom:10px">
+      <button class="mes-btn" id="st-mes-ant">&#8249;</button>
+      <div class="mes-label" id="st-mes-lbl">Carregando...</div>
+      <button class="mes-btn" id="st-mes-prox">&#8250;</button>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Vendas diárias por funcionária</div>
+      <div style="overflow-x:auto;margin-top:8px">
+        <table id="st-tabela" style="width:100%;border-collapse:collapse;font-size:12px;min-width:280px">
+          <thead id="st-head"></thead>
+          <tbody id="st-body"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div class="screen" id="sc-pata">
@@ -351,6 +411,8 @@ function startListeners(){
     VENDAS=snap.val()||{};
     setSS("ok","Sincronizado em tempo real ✓");
     if(document.getElementById("sc-dash").classList.contains("active")) renderDash();
+    if(document.getElementById("sc-equipe").classList.contains("active")) renderEquipe();
+    if(document.getElementById("sc-stats").classList.contains("active")) renderStats();
     if(GER&&document.getElementById("sc-ger").classList.contains("active")) renderHist();
   });
   db.ref("users").on("value",snap=>{
@@ -444,6 +506,8 @@ document.querySelectorAll(".tab").forEach(btn=>{
     document.getElementById("sc-"+t).classList.add("active");
     this.classList.add("active");
     if(t==="dash") renderDash();
+    if(t==="equipe"){mesSel2=mesSel;anoSel2=anoSel;renderEquipe();}
+    if(t==="stats"){mesSel3=mesSel;anoSel3=anoSel;renderStats();}
     if(t==="pata") renderTabela();
     if(t==="ger") renderGer();
   });
@@ -529,6 +593,157 @@ function renderTabela(idx){
 function renderGer(){
   renderFuncSel();renderFuncDashSel();renderHist();renderFuncs();
   document.getElementById("g-dia").value=new Date().toISOString().split("T")[0];
+
+// ===== MÊS SELETORES ADICIONAIS =====
+let mesSel2 = new Date().getMonth(), anoSel2 = new Date().getFullYear();
+let mesSel3 = new Date().getMonth(), anoSel3 = new Date().getFullYear();
+
+document.getElementById("eq-mes-ant").addEventListener("click",function(){
+  mesSel2--;if(mesSel2<0){mesSel2=11;anoSel2--;}
+  document.getElementById("eq-mes-lbl").textContent=MESES[mesSel2]+" "+anoSel2;
+  renderEquipe();
+});
+document.getElementById("eq-mes-prox").addEventListener("click",function(){
+  mesSel2++;if(mesSel2>11){mesSel2=0;anoSel2++;}
+  document.getElementById("eq-mes-lbl").textContent=MESES[mesSel2]+" "+anoSel2;
+  renderEquipe();
+});
+document.getElementById("st-mes-ant").addEventListener("click",function(){
+  mesSel3--;if(mesSel3<0){mesSel3=11;anoSel3--;}
+  document.getElementById("st-mes-lbl").textContent=MESES[mesSel3]+" "+anoSel3;
+  renderStats();
+});
+document.getElementById("st-mes-prox").addEventListener("click",function(){
+  mesSel3++;if(mesSel3>11){mesSel3=0;anoSel3++;}
+  document.getElementById("st-mes-lbl").textContent=MESES[mesSel3]+" "+anoSel3;
+  renderStats();
+});
+
+function mkEq(){return anoSel2+"-"+String(mesSel2+1).padStart(2,"0");}
+function mkSt(){return anoSel3+"-"+String(mesSel3+1).padStart(2,"0");}
+
+// ===== ABA EQUIPE =====
+let EQGRAF = null;
+function renderEquipe(){
+  const mk = mkEq();
+  document.getElementById("eq-mes-lbl").textContent = MESES[mesSel2]+" "+anoSel2;
+
+  const totalLoja = Object.values(VENDAS).filter(v=>v.d&&v.d.startsWith(mk)).reduce((s,v)=>s+v.v,0);
+  const idx = pidx(totalLoja);
+  const pct = PATS[idx].pct;
+  document.getElementById("eq-total-loja").textContent = fmt(totalLoja);
+  document.getElementById("eq-patamar-loja").textContent = "Patamar atual: "+pct.toFixed(2).replace(".",",")+"%";
+
+  const lista = document.getElementById("eq-lista");
+  lista.innerHTML = "";
+  const entries = Object.entries(USERS);
+  if(!entries.length){ lista.innerHTML = '<div class="empty">Nenhum funcionário cadastrado.</div>'; return; }
+
+  // Calcular totais para barra comparativa
+  const totais = entries.map(([k,u])=>({key:k,nome:u.nome,usu:u.u,total:Object.values(VENDAS).filter(v=>v.d&&v.d.startsWith(mk)&&v.u===k).reduce((s,v)=>s+v.v,0)}));
+  totais.sort((a,b)=>b.total-a.total);
+  const maxTotal = totais.length ? Math.max(...totais.map(t=>t.total),1) : 1;
+
+  totais.forEach(t=>{
+    const com = t.total * pct / 100;
+    const progPct = Math.min(100,(t.total/maxTotal)*100);
+    const div = document.createElement("div"); div.className = "eq-card";
+    div.innerHTML = `
+      <div class="eq-av">${t.nome.charAt(0).toUpperCase()}</div>
+      <div class="eq-info">
+        <div class="eq-nome">${t.nome}</div>
+        <div class="eq-sub">@${t.usu}</div>
+        <div class="eq-bar-bg"><div class="eq-bar-fill" style="width:${progPct}%"></div></div>
+      </div>
+      <div class="eq-vals">
+        <div class="eq-total">${fmt(t.total)}</div>
+        <div class="eq-com">Comissão: ${fmt(com)}</div>
+      </div>`;
+    lista.appendChild(div);
+  });
+
+  // Gráfico comparativo
+  if(EQGRAF){EQGRAF.destroy();EQGRAF=null;}
+  if(!totais.length) return;
+  const colors = ["#c8900a","#2d6a1f","#6b3a12","#1f6b5a","#6b1f3a"];
+  EQGRAF = new Chart(document.getElementById("eq-graf"),{
+    type:"bar",
+    data:{
+      labels: totais.map(t=>t.nome.split(" ")[0]),
+      datasets:[{
+        label:"Vendas",
+        data: totais.map(t=>t.total),
+        backgroundColor: totais.map((_,i)=>colors[i%colors.length]),
+        borderRadius:6
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>"R$"+(v/1000).toFixed(0)+"k"},grid:{color:"#eee"}},
+              x:{grid:{display:false}}}}
+  });
+}
+
+// ===== ABA ESTATÍSTICAS =====
+function renderStats(){
+  const mk = mkSt();
+  document.getElementById("st-mes-lbl").textContent = MESES[mesSel3]+" "+anoSel3;
+
+  const usuarios = Object.entries(USERS);
+  // Pegar todos os dias com vendas neste mês
+  const vendasMes = Object.values(VENDAS).filter(v=>v.d&&v.d.startsWith(mk));
+  const diasSet = new Set(vendasMes.map(v=>v.d));
+  const dias = Array.from(diasSet).sort();
+
+  const head = document.getElementById("st-head");
+  const body = document.getElementById("st-body");
+  head.innerHTML = "";
+  body.innerHTML = "";
+
+  if(!dias.length || !usuarios.length){
+    body.innerHTML = '<tr><td colspan="20" style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Nenhuma venda neste mês.</td></tr>';
+    return;
+  }
+
+  // Cabeçalho: Dia | Nome1 | Nome2 | ... | Total do dia
+  const trHead = document.createElement("tr");
+  let headHTML = '<th class="st-th" style="text-align:left">Dia</th>';
+  usuarios.forEach(([k,u])=>{ headHTML += `<th class="st-th">${u.nome.split(" ")[0]}</th>`; });
+  headHTML += '<th class="st-th">Total</th>';
+  trHead.innerHTML = headHTML;
+  head.appendChild(trHead);
+
+  // Totais por usuário
+  const totaisUser = {};
+  usuarios.forEach(([k])=>{ totaisUser[k] = 0; });
+  let totalGeral = 0;
+
+  // Linhas por dia
+  dias.forEach(d=>{
+    const p = d.split("-");
+    const dLabel = p[2]+"/"+p[1];
+    const tr = document.createElement("tr"); tr.className = "st-tr";
+    let rowHTML = `<td class="st-td">${dLabel}</td>`;
+    let totalDia = 0;
+    usuarios.forEach(([k])=>{
+      const val = vendasMes.filter(v=>v.d===d&&v.u===k).reduce((s,v)=>s+v.v,0);
+      totaisUser[k] += val;
+      totalDia += val;
+      rowHTML += `<td class="st-td">${val>0?fmt(val):"-"}</td>`;
+    });
+    totalGeral += totalDia;
+    rowHTML += `<td class="st-td st-total">${fmt(totalDia)}</td>`;
+    tr.innerHTML = rowHTML;
+    body.appendChild(tr);
+  });
+
+  // Linha de totais
+  const trFoot = document.createElement("tr"); trFoot.className = "st-foot";
+  let footHTML = '<td class="st-td">Total</td>';
+  usuarios.forEach(([k])=>{ footHTML += `<td class="st-td">${fmt(totaisUser[k])}</td>`; });
+  footHTML += `<td class="st-td">${fmt(totalGeral)}</td>`;
+  trFoot.innerHTML = footHTML;
+  body.appendChild(trFoot);
+}
 
 function renderFuncDashSel(){
   const sel=document.getElementById("g-func-dash-sel");
@@ -692,6 +907,157 @@ document.getElementById("btn-salvar-edit").addEventListener("click",function(){
 });
 
 document.getElementById("g-dia").value=new Date().toISOString().split("T")[0];
+
+// ===== MÊS SELETORES ADICIONAIS =====
+let mesSel2 = new Date().getMonth(), anoSel2 = new Date().getFullYear();
+let mesSel3 = new Date().getMonth(), anoSel3 = new Date().getFullYear();
+
+document.getElementById("eq-mes-ant").addEventListener("click",function(){
+  mesSel2--;if(mesSel2<0){mesSel2=11;anoSel2--;}
+  document.getElementById("eq-mes-lbl").textContent=MESES[mesSel2]+" "+anoSel2;
+  renderEquipe();
+});
+document.getElementById("eq-mes-prox").addEventListener("click",function(){
+  mesSel2++;if(mesSel2>11){mesSel2=0;anoSel2++;}
+  document.getElementById("eq-mes-lbl").textContent=MESES[mesSel2]+" "+anoSel2;
+  renderEquipe();
+});
+document.getElementById("st-mes-ant").addEventListener("click",function(){
+  mesSel3--;if(mesSel3<0){mesSel3=11;anoSel3--;}
+  document.getElementById("st-mes-lbl").textContent=MESES[mesSel3]+" "+anoSel3;
+  renderStats();
+});
+document.getElementById("st-mes-prox").addEventListener("click",function(){
+  mesSel3++;if(mesSel3>11){mesSel3=0;anoSel3++;}
+  document.getElementById("st-mes-lbl").textContent=MESES[mesSel3]+" "+anoSel3;
+  renderStats();
+});
+
+function mkEq(){return anoSel2+"-"+String(mesSel2+1).padStart(2,"0");}
+function mkSt(){return anoSel3+"-"+String(mesSel3+1).padStart(2,"0");}
+
+// ===== ABA EQUIPE =====
+let EQGRAF = null;
+function renderEquipe(){
+  const mk = mkEq();
+  document.getElementById("eq-mes-lbl").textContent = MESES[mesSel2]+" "+anoSel2;
+
+  const totalLoja = Object.values(VENDAS).filter(v=>v.d&&v.d.startsWith(mk)).reduce((s,v)=>s+v.v,0);
+  const idx = pidx(totalLoja);
+  const pct = PATS[idx].pct;
+  document.getElementById("eq-total-loja").textContent = fmt(totalLoja);
+  document.getElementById("eq-patamar-loja").textContent = "Patamar atual: "+pct.toFixed(2).replace(".",",")+"%";
+
+  const lista = document.getElementById("eq-lista");
+  lista.innerHTML = "";
+  const entries = Object.entries(USERS);
+  if(!entries.length){ lista.innerHTML = '<div class="empty">Nenhum funcionário cadastrado.</div>'; return; }
+
+  // Calcular totais para barra comparativa
+  const totais = entries.map(([k,u])=>({key:k,nome:u.nome,usu:u.u,total:Object.values(VENDAS).filter(v=>v.d&&v.d.startsWith(mk)&&v.u===k).reduce((s,v)=>s+v.v,0)}));
+  totais.sort((a,b)=>b.total-a.total);
+  const maxTotal = totais.length ? Math.max(...totais.map(t=>t.total),1) : 1;
+
+  totais.forEach(t=>{
+    const com = t.total * pct / 100;
+    const progPct = Math.min(100,(t.total/maxTotal)*100);
+    const div = document.createElement("div"); div.className = "eq-card";
+    div.innerHTML = `
+      <div class="eq-av">${t.nome.charAt(0).toUpperCase()}</div>
+      <div class="eq-info">
+        <div class="eq-nome">${t.nome}</div>
+        <div class="eq-sub">@${t.usu}</div>
+        <div class="eq-bar-bg"><div class="eq-bar-fill" style="width:${progPct}%"></div></div>
+      </div>
+      <div class="eq-vals">
+        <div class="eq-total">${fmt(t.total)}</div>
+        <div class="eq-com">Comissão: ${fmt(com)}</div>
+      </div>`;
+    lista.appendChild(div);
+  });
+
+  // Gráfico comparativo
+  if(EQGRAF){EQGRAF.destroy();EQGRAF=null;}
+  if(!totais.length) return;
+  const colors = ["#c8900a","#2d6a1f","#6b3a12","#1f6b5a","#6b1f3a"];
+  EQGRAF = new Chart(document.getElementById("eq-graf"),{
+    type:"bar",
+    data:{
+      labels: totais.map(t=>t.nome.split(" ")[0]),
+      datasets:[{
+        label:"Vendas",
+        data: totais.map(t=>t.total),
+        backgroundColor: totais.map((_,i)=>colors[i%colors.length]),
+        borderRadius:6
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>"R$"+(v/1000).toFixed(0)+"k"},grid:{color:"#eee"}},
+              x:{grid:{display:false}}}}
+  });
+}
+
+// ===== ABA ESTATÍSTICAS =====
+function renderStats(){
+  const mk = mkSt();
+  document.getElementById("st-mes-lbl").textContent = MESES[mesSel3]+" "+anoSel3;
+
+  const usuarios = Object.entries(USERS);
+  // Pegar todos os dias com vendas neste mês
+  const vendasMes = Object.values(VENDAS).filter(v=>v.d&&v.d.startsWith(mk));
+  const diasSet = new Set(vendasMes.map(v=>v.d));
+  const dias = Array.from(diasSet).sort();
+
+  const head = document.getElementById("st-head");
+  const body = document.getElementById("st-body");
+  head.innerHTML = "";
+  body.innerHTML = "";
+
+  if(!dias.length || !usuarios.length){
+    body.innerHTML = '<tr><td colspan="20" style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Nenhuma venda neste mês.</td></tr>';
+    return;
+  }
+
+  // Cabeçalho: Dia | Nome1 | Nome2 | ... | Total do dia
+  const trHead = document.createElement("tr");
+  let headHTML = '<th class="st-th" style="text-align:left">Dia</th>';
+  usuarios.forEach(([k,u])=>{ headHTML += `<th class="st-th">${u.nome.split(" ")[0]}</th>`; });
+  headHTML += '<th class="st-th">Total</th>';
+  trHead.innerHTML = headHTML;
+  head.appendChild(trHead);
+
+  // Totais por usuário
+  const totaisUser = {};
+  usuarios.forEach(([k])=>{ totaisUser[k] = 0; });
+  let totalGeral = 0;
+
+  // Linhas por dia
+  dias.forEach(d=>{
+    const p = d.split("-");
+    const dLabel = p[2]+"/"+p[1];
+    const tr = document.createElement("tr"); tr.className = "st-tr";
+    let rowHTML = `<td class="st-td">${dLabel}</td>`;
+    let totalDia = 0;
+    usuarios.forEach(([k])=>{
+      const val = vendasMes.filter(v=>v.d===d&&v.u===k).reduce((s,v)=>s+v.v,0);
+      totaisUser[k] += val;
+      totalDia += val;
+      rowHTML += `<td class="st-td">${val>0?fmt(val):"-"}</td>`;
+    });
+    totalGeral += totalDia;
+    rowHTML += `<td class="st-td st-total">${fmt(totalDia)}</td>`;
+    tr.innerHTML = rowHTML;
+    body.appendChild(tr);
+  });
+
+  // Linha de totais
+  const trFoot = document.createElement("tr"); trFoot.className = "st-foot";
+  let footHTML = '<td class="st-td">Total</td>';
+  usuarios.forEach(([k])=>{ footHTML += `<td class="st-td">${fmt(totaisUser[k])}</td>`; });
+  footHTML += `<td class="st-td">${fmt(totalGeral)}</td>`;
+  trFoot.innerHTML = footHTML;
+  body.appendChild(trFoot);
+}
 
 function renderFuncDashSel(){
   const sel=document.getElementById("g-func-dash-sel");
